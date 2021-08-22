@@ -27,7 +27,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.0.0.0";                        
+        public const string Version = "1.1.0.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -56,6 +56,7 @@ namespace LordAshes
 
             // Subscribe to light events
             StatMessaging.Subscribe(LightPlugin.Guid, StatMessagingRequest);
+            StatMessaging.Subscribe(LightPlugin.Guid+".GM", StatMessagingRequest);
 
             // Post on main page
             Utility.PostOnMainPage(this.GetType());
@@ -71,15 +72,16 @@ namespace LordAshes
 
         public class LightSpecs
         {
-            public string name { get; set; }
-            public LightType lightType { get; set; }
-            public string iconName { get; set; }
-            public float intensity { get; set; }
-            public string color { get; set; }
-            public float range { get; set; }
-            public string pos { get; set; }
-            public string rot { get; set; }
-            public float spotAngle { get; set; }
+            public string name { get; set; } = "Light";
+            public LightType lightType { get; set; } = LightType.Point;
+            public string iconName { get; set; } = "Light.png";
+            public float intensity { get; set; } = 0.01f;
+            public string color { get; set; } = "255,255,128";
+            public float range { get; set; } = 2.0f;
+            public string pos { get; set; } = "0,0.75,0";
+            public string rot { get; set; } = "90,0,0";
+            public float spotAngle { get; set; } = 15f;
+            public bool sight { get; set; } = false;
         }
     }
 }

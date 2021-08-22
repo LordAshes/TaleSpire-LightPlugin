@@ -13,8 +13,33 @@ namespace LordAshes
         /// <param name="lightName"></param>
         public void RadialMenuRequest(CreatureGuid cid, NGuid rid, string lightName)
         {
-            Debug.Log("Light Plugin: Requesting A "+lightName+" Light");
-            StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid, lightName);
+            if (lightName == "")
+            {
+                Debug.Log("Light Plugin: Requesting No Light");
+                StatMessaging.ClearInfo(new CreatureGuid(rid), LightPlugin.Guid);
+                StatMessaging.ClearInfo(new CreatureGuid(rid), LightPlugin.Guid + ".GM");
+            }
+            else if (!lights.ContainsKey(lightName))
+            {
+                Debug.Log("Light Plugin: Don't Recognize A '"+lightName+"' Light");
+                return;
+            }
+            else
+            {
+                if (lights[lightName].sight == false)
+                {
+                    // Regular light (visible to all)
+                    Debug.Log("Light Plugin: Requesting A Global '"+lightName+"' Light");
+                    StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid, lightName);
+                }
+                else
+                {
+                    // GM and owned player only
+                    Debug.Log("Light Plugin: Requesting A Sight '" + lightName + "' Light");
+                    StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid + ".GM", lightName);
+                    ProcessRequest(new CreatureGuid(rid), lightName);
+                }
+            }
         }
 
         /// <summary>
@@ -23,16 +48,26 @@ namespace LordAshes
         /// <param name="changes"></param>
         public void StatMessagingRequest(StatMessaging.Change[] changes)
         {
+            Debug.Log("Light Plugin: Changes Received");
             foreach (StatMessaging.Change change in changes)
             {
-                Debug.Log("Light Plugin: Processing A " + change.value + " Light Request");
-                if (change.action != StatMessaging.ChangeType.removed)
+                Debug.Log("Light Plugin: Change '"+change.action+"' for '"+change.cid+"' from '"+change.previous+"' To '"+change.value+" ("+change.key+")");
+                if (change.key != LightPlugin.Guid + ".GM" || LocalClient.IsPartyGm || !LocalClient.IsInGmMode)
                 {
-                    ProcessRequest(change.cid, change.value);
+                    if (change.action != StatMessaging.ChangeType.removed)
+                    {
+                        Debug.Log("Light Plugin: Processing A '" + change.value + "' Light Request");
+                        ProcessRequest(change.cid, change.value);
+                    }
+                    else
+                    {
+                        Debug.Log("Light Plugin: Processing A No Light Request");
+                        ProcessRequest(change.cid, "");
+                    }
                 }
                 else
                 {
-                    ProcessRequest(change.cid, "");
+                    Debug.Log("Light Plugin: Ignoring GM Request");
                 }
             }
         }
