@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 using System.Collections.Generic;
+using System;
 
 /// <summary>
 /// 
@@ -27,7 +28,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.1.0.0";                        
+        public const string Version = "1.2.0.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -47,16 +48,32 @@ namespace LordAshes
             RadialUI.RadialSubmenu.EnsureMainMenuItem(LightPlugin.Guid, RadialUI.RadialSubmenu.MenuType.character, "Light", FileAccessPlugin.Image.LoadSprite("Light.png"));
 
             // Create light sub menu
-            RadialUI.RadialSubmenu.CreateSubMenuItem(LightPlugin.Guid, "None", FileAccessPlugin.Image.LoadSprite("light.png"), (cid, s, mmi) => { RadialMenuRequest(cid, RadialUI.RadialUIPlugin.GetLastRadialTargetCreature(), ""); }, true, null);
-            foreach (LightSpecs light in JsonConvert.DeserializeObject<LightSpecs[]>(FileAccessPlugin.File.ReadAllText("LightTypes.json")))
+            List<LightSpecs> lightAvailable = JsonConvert.DeserializeObject<List<LightSpecs>>(FileAccessPlugin.File.ReadAllText("LightTypes.json"));
+            lightAvailable.Insert(0, new LightSpecs() { name = "None", iconName = "None.png" });
+            foreach (LightSpecs light in lightAvailable)
             {
-                RadialUI.RadialSubmenu.CreateSubMenuItem(LightPlugin.Guid, light.name, FileAccessPlugin.Image.LoadSprite(light.iconName), (cid,s,mmi)=> { RadialMenuRequest(cid, RadialUI.RadialUIPlugin.GetLastRadialTargetCreature(),light.name); }, true, null);
+                RadialUI.RadialSubmenu.CreateSubMenuItem(LightPlugin.Guid, light.name, FileAccessPlugin.Image.LoadSprite(light.iconName), 
+                                                         (cid,s,mmi)=> { RadialMenuRequest(cid, RadialUI.RadialUIPlugin.GetLastRadialTargetCreature(), light.name); },
+                                                         true, 
+                                                         ()=> 
+                                                         {
+                                                             bool isGM = LocalClient.IsInGmMode;
+                                                             bool isOwner = LocalClient.CanControlCreature(new CreatureGuid(RadialUI.RadialUIPlugin.GetLastRadialTargetCreature()));
+                                                             // Debug.Log("isGM:" + isGM + ", isOwner:" + isOwner + ", requiredGM:" + light.onlyGM);
+                                                             if (isOwner && (isGM || light.onlyGM==false))
+                                                              { 
+                                                                  return true;
+                                                              } 
+                                                              else 
+                                                              { 
+                                                                  return false; 
+                                                              } 
+                                                         });
                 lights.Add(light.name, light);
             }
 
             // Subscribe to light events
             StatMessaging.Subscribe(LightPlugin.Guid, StatMessagingRequest);
-            StatMessaging.Subscribe(LightPlugin.Guid+".GM", StatMessagingRequest);
 
             // Post on main page
             Utility.PostOnMainPage(this.GetType());
@@ -82,6 +99,8 @@ namespace LordAshes
             public string rot { get; set; } = "90,0,0";
             public float spotAngle { get; set; } = 15f;
             public bool sight { get; set; } = false;
+            public bool onlyGM { get; set; } = false;
         }
     }
 }
+

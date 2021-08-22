@@ -13,32 +13,18 @@ namespace LordAshes
         /// <param name="lightName"></param>
         public void RadialMenuRequest(CreatureGuid cid, NGuid rid, string lightName)
         {
-            if (lightName == "")
+            if (lightName == "None")
             {
                 Debug.Log("Light Plugin: Requesting No Light");
                 StatMessaging.ClearInfo(new CreatureGuid(rid), LightPlugin.Guid);
-                StatMessaging.ClearInfo(new CreatureGuid(rid), LightPlugin.Guid + ".GM");
             }
-            else if (!lights.ContainsKey(lightName))
+            else if (lights.ContainsKey(lightName))
             {
-                Debug.Log("Light Plugin: Don't Recognize A '"+lightName+"' Light");
-                return;
+                StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid, lightName);
             }
             else
             {
-                if (lights[lightName].sight == false)
-                {
-                    // Regular light (visible to all)
-                    Debug.Log("Light Plugin: Requesting A Global '"+lightName+"' Light");
-                    StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid, lightName);
-                }
-                else
-                {
-                    // GM and owned player only
-                    Debug.Log("Light Plugin: Requesting A Sight '" + lightName + "' Light");
-                    StatMessaging.SetInfo(new CreatureGuid(rid), LightPlugin.Guid + ".GM", lightName);
-                    ProcessRequest(new CreatureGuid(rid), lightName);
-                }
+                Debug.Log("Light Plugin: Don't Seem To Have A '" + lightName + "' Light");
             }
         }
 
@@ -51,23 +37,19 @@ namespace LordAshes
             Debug.Log("Light Plugin: Changes Received");
             foreach (StatMessaging.Change change in changes)
             {
-                Debug.Log("Light Plugin: Change '"+change.action+"' for '"+change.cid+"' from '"+change.previous+"' To '"+change.value+" ("+change.key+")");
-                if (change.key != LightPlugin.Guid + ".GM" || LocalClient.IsPartyGm || !LocalClient.IsInGmMode)
+                Debug.Log("Light Plugin: Change '"+change.action+"' for '"+change.cid+"' from '"+change.previous+"' To '"+change.value+"' ("+change.key+")");
+                bool process = true;
+                if (change.action != StatMessaging.ChangeType.removed)
                 {
-                    if (change.action != StatMessaging.ChangeType.removed)
-                    {
-                        Debug.Log("Light Plugin: Processing A '" + change.value + "' Light Request");
-                        ProcessRequest(change.cid, change.value);
-                    }
-                    else
-                    {
-                        Debug.Log("Light Plugin: Processing A No Light Request");
-                        ProcessRequest(change.cid, "");
-                    }
+                    process = !lights[change.value].sight || LocalClient.CanControlCreature(change.cid);
+                    Debug.Log("Light Plugin: Processing A '" + change.value + "' Light Request (Sight Light: "+ lights[change.value].sight+" | Controlled: "+ LocalClient.CanControlCreature(change.cid)+" => "+process+")");
+                    if (process) { ProcessRequest(change.cid, change.value); }
                 }
                 else
                 {
-                    Debug.Log("Light Plugin: Ignoring GM Request");
+                    process = (change.previous!="") ? !lights[change.previous].sight || LocalClient.CanControlCreature(change.cid) : true;
+                    Debug.Log("Light Plugin: Processing A No Light Request (Sight Light: " + ((change.previous != "") ? lights[change.previous].sight.ToString() : "N/A") + " | Controlled: " + LocalClient.CanControlCreature(change.cid)+" => "+process+")");
+                    if (process) { ProcessRequest(change.cid, ""); }
                 }
             }
         }
@@ -126,9 +108,9 @@ namespace LordAshes
             {
                 Debug.Log("Light Plugin: Extinguishing Light");
 
-                Debug.Log("Socket Find = " + (GameObject.Find("Effect:Light:" + cid) != null));
+                GameObject light = GameObject.Find("Effect:Light:" + cid);
 
-                GameObject.Destroy(GameObject.Find("Effect:Light:" + cid));
+                if (light != null) { GameObject.Destroy(light); }
             }
         }
     }
