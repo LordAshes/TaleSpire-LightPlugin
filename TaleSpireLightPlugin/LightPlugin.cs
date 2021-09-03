@@ -28,7 +28,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.2.0.0";                        
+        public const string Version = "1.3.0.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -99,6 +99,7 @@ namespace LordAshes
             public string rot { get; set; } = "90,0,0";
             public float spotAngle { get; set; } = 15f;
             public bool sight { get; set; } = false;
+            public bool hiddenBase { get; set; } = false;
             public bool onlyGM { get; set; } = false;
         }
     }

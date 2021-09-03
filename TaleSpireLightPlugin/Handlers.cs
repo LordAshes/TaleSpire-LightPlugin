@@ -103,6 +103,11 @@ namespace LordAshes
                 socket.transform.localPosition = new Vector3(float.Parse(p[0]), float.Parse(p[1]), float.Parse(p[2]));
                 socket.transform.localEulerAngles = new Vector3(float.Parse(r[0]), float.Parse(r[1]), float.Parse(r[2]));
 
+                if(ls.hiddenBase)
+                {
+                    CreatureManager.SetCreatureExplicitHideState(asset.Creature.CreatureId, true);
+                    CreatureManager.SetCreatureName(asset.Creature.CreatureId, "<color=red>");
+                }
             }
             else
             {
