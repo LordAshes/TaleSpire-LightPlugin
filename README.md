@@ -16,11 +16,17 @@ Added light causes object to cast shadows. Added light produced hard light limit
 ## Change Log
 
 1.3.0: Added hiddenBase option
+
 1.2.0: Added GM only light option (via onlyGM property)
+
 1.2.0: Light menu does not show options for mini that the player does not own
+
 1.2.0: Changed sight light distribution so that it can be triggered by player or GM
+
 1.1.0: Added sight light option (light only visible by mini owner and GM)
+
 1.1.0: Removal of light now removes Stats Messaging key (as opposed to making it blank)
+
 1.0.0: Initial release
 
 ## Install
