@@ -15,6 +15,10 @@ Added light causes object to cast shadows. Added light produced hard light limit
  
 ## Change Log
 
+1.4.1: But fix for issue which prevented lights from being removed
+
+1.4.0: Added optional properties intensityMin and deltaMax for two flickering light options
+
 1.3.0: Added hiddenBase option
 
 1.2.0: Added GM only light option (via onlyGM property)
@@ -60,6 +64,9 @@ remove lights. The structure for a light is as follows:
 		"pos":"0,1.5,0",
 		"rot":"90,0,0",
 		"spotAngle":10.0,
+		"flicked":true,
+		"intensityMin":0.025,
+		"deltaMax":0.05,
 		"sight":false,
 		"onlyGM":false,
 		"hiddenBase":false
@@ -94,6 +101,20 @@ offset from the base of the mini.
 
 "spotAngle" is a float indicating the angle of a spot light.
 
+"flicker" is a boolean (true or false) which determines if the light uses either or both of the
+plicker effects. Default is false. See "intensityMin" and "deltaMax" for details.
+
+"intensityMin" is a float that determines the minimum intensity that the flickering light will
+drop to. When flicker is on the intensity will randomly changes between intensityMin and intensity.
+Not used if the flicker setting for the light is set to false. As far as I can tell, this is the
+flicker method used by TS. Setting this to the same as intensity will produce a non-changing
+intensity.
+
+"deltaMax" is a float which determines how much the light can randomly shift when flickering.
+When this value is not zero the light will randomly shift in the x and y direction up to this
+value. This setting is ignored if the light's flicker setting is false. Used to make the shadows
+shift or "dance". Setting this setting to 0 will provide a non-shifting light.
+
 "sight" indicates if the light is personal light (e.g. darkvision) or regular light which
 benefits all party members. If true only mini owner and GM can see the light. If false then
 all players can see the light.
@@ -109,6 +130,12 @@ mounted lights, hanging lights and so on. When this setting is set to true, acti
 will automatically hide the mini (leaving only the light effect) and will also erase the base
 mini name so that its name does not clutter the GM view. 
 
+### Configuring Update Interval
+
+The R2ModMan configuration for the plugin contains an value which determines how often the light
+flicker is updated. The higher the number the less frequently the light flicker is updated and
+thus the less flickering. The smaller the value the faster the flickering will change. Min 0.
+
 ## Limitations
 
 1. Currently the JSON file is a local file which, if modified, need to be distributed to all
@@ -118,3 +145,5 @@ mini name so that its name does not clutter the GM view.
    effect and even use Grab/Drop plugin to grag it around automatically.
    
 3. When a mini is not owned, the top level Light menu still shows but has no sub-options.
+
+
