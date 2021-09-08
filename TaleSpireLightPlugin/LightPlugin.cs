@@ -28,12 +28,15 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.3.0.0";                        
+        public const string Version = "1.4.1.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
 
         private Dictionary<string,LightSpecs> lights = new Dictionary<string,LightSpecs>();
+
+        private int flickerSequencer = 0;
+        private int flickerSteps = 20;
 
         /// <summary>
         /// Function for initializing plugin
@@ -72,6 +75,9 @@ namespace LordAshes
                 lights.Add(light.name, light);
             }
 
+            // Obtain Flicker Configuration
+            flickerSteps = Config.Bind("Settings", "Updates per flicker update", 20).Value;
+
             // Subscribe to light events
             StatMessaging.Subscribe(LightPlugin.Guid, StatMessagingRequest);
 
@@ -85,8 +91,46 @@ namespace LordAshes
         /// </summary>
         void Update()
         {
+            flickerSequencer++;
+            if (flickerSequencer >= flickerSteps) { flickerSequencer = 0; }
+
+            if (flickerSequencer == 0)
+            {
+                foreach (CreatureBoardAsset asset in CreaturePresenter.AllCreatureAssets)
+                {
+                    // Look for a light
+                    Light light = asset.GetComponentInChildren<Light>();
+                    if (light != null)
+                    {
+                        // Check to see if the light is a custom light
+                        if (light.name.StartsWith("Effect:Light:"))
+                        {
+                            string lightName = light.name.Substring("Effect:Light:".Length);
+                            lightName = lightName.Substring(0, lightName.IndexOf(":"));
+                            // Look up light type
+                            if (lights.ContainsKey(lightName))
+                            {
+                                // Check if custom light has flicker active
+                                if (lights[lightName].flicker)
+                                {
+                                    // Process custom light flicker
+                                    System.Random rnd = new System.Random();
+                                    float randomizer = rnd.Next(0, 100);
+                                    float intensity = (randomizer / 100f) * (lights[lightName].intensity - lights[lightName].intensityMin) + lights[lightName].intensityMin;
+                                    light.intensity = intensity;
+                                    float dx = lights[lightName].deltaMax * (float)(rnd.Next(0, 100)) / 100f;
+                                    float dy = lights[lightName].deltaMax * (float)(rnd.Next(0, 100)) / 100f;
+                                    string[] pos = lights[lightName].pos.Split(',');
+                                    light.transform.localPosition = new Vector3(float.Parse(pos[0]) + dx, float.Parse(pos[1]), float.Parse(pos[2]) + dy);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
+        [Serializable()]
         public class LightSpecs
         {
             public string name { get; set; } = "Light";
@@ -98,6 +142,9 @@ namespace LordAshes
             public string pos { get; set; } = "0,0.75,0";
             public string rot { get; set; } = "90,0,0";
             public float spotAngle { get; set; } = 15f;
+            public bool flicker { get; set; } = false;
+            public float intensityMin { get; set; } = 0f;
+            public float deltaMax { get; set; } = 0f;
             public bool sight { get; set; } = false;
             public bool hiddenBase { get; set; } = false;
             public bool onlyGM { get; set; } = false;

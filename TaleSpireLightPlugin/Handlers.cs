@@ -65,8 +65,16 @@ namespace LordAshes
 
             if (lightName != "")
             {
+                GameObject socket = null;
+                foreach (GameObject go in GameObject.FindObjectsOfType<GameObject>())
+                {
+                    if (go.name.StartsWith("Effect:Light:") && go.name.EndsWith(cid.ToString()))
+                    {
+                        socket = go;
+                        break;
+                    }
+                }
 
-                GameObject socket = GameObject.Find("Effect:Light:" + cid);
                 if (socket == null)
                 {
                     Debug.Log("Light Plugin: Creating New Light Socket");
@@ -87,6 +95,7 @@ namespace LordAshes
                 string[] c = ls.color.Split(',');
                 string[] p = ls.pos.Split(',');
                 string[] r = ls.rot.Split(',');
+                light.name = "Effect:Light:" + ls.name + ":"+cid;
                 light.type = ls.lightType;
                 light.color = new UnityEngine.Color(float.Parse(c[0]), float.Parse(c[1]), float.Parse(c[2]));
                 light.intensity = ls.intensity;
@@ -113,9 +122,17 @@ namespace LordAshes
             {
                 Debug.Log("Light Plugin: Extinguishing Light");
 
-                GameObject light = GameObject.Find("Effect:Light:" + cid);
+                GameObject socket = null;
+                foreach (GameObject go in GameObject.FindObjectsOfType<GameObject>())
+                {
+                    if (go.name.StartsWith("Effect:Light:") && go.name.EndsWith(cid.ToString()))
+                    {
+                        socket = go;
+                        break;
+                    }
+                }
 
-                if (light != null) { GameObject.Destroy(light); }
+                if (socket != null) { GameObject.Destroy(socket); }
             }
         }
     }
