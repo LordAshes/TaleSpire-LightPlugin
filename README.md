@@ -270,7 +270,8 @@ be used to navigate to the parent menu.
 		"onlyGM":true,
 		"menuNode": "Spotlights"
 	}
-]```
+]
+```
 
 ### Configuring Update Interval
 
