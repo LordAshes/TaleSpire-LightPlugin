@@ -15,7 +15,9 @@ Added light causes object to cast shadows. Added light produced hard light limit
  
 ## Change Log
 
-1.4.1: But fix for issue which prevented lights from being removed
+1.5.0: Added support for hierarchical light menus using GUI Menu Plugin
+
+1.4.1: Bug fix for issue which prevented lights from being removed
 
 1.4.0: Added optional properties intensityMin and deltaMax for two flickering light options
 
@@ -129,6 +131,146 @@ is used with onlyGM lights which are not associated with a mini such as ambient 
 mounted lights, hanging lights and so on. When this setting is set to true, activating the light
 will automatically hide the mini (leaving only the light effect) and will also erase the base
 mini name so that its name does not clutter the GM view. 
+
+### Configuring Light Menus
+
+There are two optional settings which can be used with light configuration to place them in
+hierarchical menus (menus with sub-menus) instead of the flat (one level) Radial UI menus.
+These properties are: menuNode and menuLink.
+
+menuNode is used to indicate which menus the light belongs to. Each unique menuNode name is a
+different menu. Items (lights) that should appear in the same menu have the same menuNode. The
+main menuNode is always called Root. When the user clicks on the Light icon in the mini radial
+menu, it will cause the Root menu to be opened. The Root menu can contain a combination of
+light selections and menuLinks (which allow access to other menus).
+
+menuLink is used to indicate the menuNode name of the menu that is to be navigated to when this
+selection is chosen. For a menuLink entry only the name, iconName, onlyGM, menuNode and menuLink
+settings are significant. All of the light settings are irrelevant for a entry with a menuLink 
+since these entries are used to make navigation buttons as opposed to light selections.
+
+By editing the R2ModMan configuration for the plugin, you can change the text color of link
+entries, text color of selection entries and if the menu is a centre menu (menu appears in the
+middle of the screen) or a side menu (menu slides out of the right side of the screen).
+
+Sample config showing a 3 menu system: one main menu offering No Light selection and two
+sub-menus (Spotlights and Ambient) and then entries for each of the sub-menus. The spot lightType
+link is only available to GM. Notice that it was not necessary to mark each of the Spotlights as
+GM only since the link to that menu is only available to GM. Notice the back entries which can
+be used to navigate to the parent menu.
+
+```[
+	{"name":"None",
+		"iconName":"none.png",
+		"menuNode":"Root"
+	},
+	{"name":"Splotlights",
+		"iconName":"spot.png",
+		"onlyGM":true,
+		"menuNode":"Root",
+		"menuLink":"Spotlights"
+	},
+	{"name":"Ambient",
+		"iconName":"ball.png",
+		"menuNode":"Root",
+		"menuLink":"Ambient"
+	},
+	{"name":"Back",
+		"iconName":"none.png",
+		"menuNode":"Ambient",
+		"menuLink":"Root"
+	},
+	{"name":"Back",
+		"iconName":"none.png",
+		"menuNode":"Spotlights",
+		"menuLink":"Root"
+	},
+	{"name":"Ball(10')",
+		"lightType":2,
+		"iconName":"ball.png",
+		"intensity":0.05,
+		"color":"200,200,200",
+		"range":3.0,
+		"pos":"0,1.5,0",
+		"rot":"90,0,0",
+		"spotAngle":10.0,
+		"menuNode": "Ambient"
+	},
+	{"name":"Torch",
+		"lightType":2,
+		"iconName":"torch.png",
+		"intensity":0.03,
+		"color":"255,255,128",
+		"range":2.0,
+		"pos":"0,0.75,0",
+		"rot":"90,0,0",
+		"spotAngle":15.0,
+		"flicker": true,
+		"intensityMin": 0.025,
+		"deltaMax": 0.05,
+		"menuNode": "Ambient"
+	},
+	{"name":"Darkvision",
+		"lightType":2,
+		"iconName":"light.png",
+		"intensity":0.03,
+		"color":"255,255,128",
+		"range":2.0,
+		"pos":"0,0.75,0",
+		"rot":"90,0,0",
+		"spotAngle":15.0,
+		"sight":true,
+		"menuNode": "Ambient"
+	},
+	{"name":"Spot (White)",
+		"lightType":0,
+		"iconName":"spot.png",
+		"intensity":0.03,
+		"color":"255,255,255",
+		"range":3.5,
+		"pos":"0,3,0",
+		"rot":"90,0,0",
+		"spotAngle":45.0,
+		"onlyGM":true,
+		"menuNode": "Spotlights"
+	},
+	{"name":"Spot (Red)",
+		"lightType":0,
+		"iconName":"spot.png",
+		"intensity":0.03,
+		"color":"255,0,0",
+		"range":3.5,
+		"pos":"0,3,0",
+		"rot":"90,0,0",
+		"spotAngle":25.0,
+		"onlyGM":true,
+		"menuNode": "Spotlights"
+	},
+	{"name":"Spot (Green)",
+		"lightType":0,
+		"iconName":"spot.png",
+		"intensity":0.03,
+		"color":"0,255,0",
+		"range":3.5,
+		"pos":"0,3,0",
+		"rot":"90,0,0",
+		"spotAngle":25.0,
+		"onlyGM":true,
+		"menuNode": "Spotlights"
+	},
+	{"name":"Spot (Blue)",
+		"lightType":0,
+		"iconName":"spot.png",
+		"intensity":0.03,
+		"color":"0,0,255",
+		"range":3.5,
+		"pos":"0,3,0",
+		"rot":"90,0,0",
+		"spotAngle":25.0,
+		"onlyGM":true,
+		"menuNode": "Spotlights"
+	}
+]```
 
 ### Configuring Update Interval
 
