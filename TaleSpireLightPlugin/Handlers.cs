@@ -10,6 +10,7 @@ namespace LordAshes
         /// Handler for Radial Menu selections
         /// </summary>
         /// <param name="cid"></param>
+        /// <param name="rid"></param>
         /// <param name="lightName"></param>
         public void RadialMenuRequest(CreatureGuid cid, NGuid rid, string lightName)
         {
