@@ -1,5 +1,8 @@
 ﻿using BepInEx;
 using Bounce.Unmanaged;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace LordAshes
@@ -42,14 +45,14 @@ namespace LordAshes
                 bool process = true;
                 if (change.action != StatMessaging.ChangeType.removed)
                 {
-                    process = !lights[change.value].sight || LocalClient.CanControlCreature(change.cid);
-                    Debug.Log("Light Plugin: Processing A '" + change.value + "' Light Request (Sight Light: "+ lights[change.value].sight+" | Controlled: "+ LocalClient.CanControlCreature(change.cid)+" => "+process+")");
+                    process = !lights[change.value].behaviour.sight || LocalClient.CanControlCreature(change.cid);
+                    Debug.Log("Light Plugin: Processing A '" + change.value + "' Light Request (Sight Light: "+ lights[change.value].behaviour.sight+" | Controlled: "+ LocalClient.CanControlCreature(change.cid)+" => "+process+")");
                     if (process) { ProcessRequest(change.cid, change.value); }
                 }
                 else
                 {
-                    process = (change.previous!="") ? !lights[change.previous].sight || LocalClient.CanControlCreature(change.cid) : true;
-                    Debug.Log("Light Plugin: Processing A No Light Request (Sight Light: " + ((change.previous != "") ? lights[change.previous].sight.ToString() : "N/A") + " | Controlled: " + LocalClient.CanControlCreature(change.cid)+" => "+process+")");
+                    process = (change.previous!="") ? !lights[change.previous].behaviour.sight || LocalClient.CanControlCreature(change.cid) : true;
+                    Debug.Log("Light Plugin: Processing A No Light Request (Sight Light: " + ((change.previous != "") ? lights[change.previous].behaviour.sight.ToString() : "N/A") + " | Controlled: " + LocalClient.CanControlCreature(change.cid)+" => "+process+")");
                     if (process) { ProcessRequest(change.cid, ""); }
                 }
             }
@@ -93,16 +96,9 @@ namespace LordAshes
 
                 Debug.Log("Light Plugin: Adjusting The Light");
                 LightSpecs ls = lights[lightName];
-                string[] c = ls.color.Split(',');
-                string[] p = ls.pos.Split(',');
-                string[] r = ls.rot.Split(',');
                 light.name = "Effect:Light:" + ls.name + ":"+cid;
-                light.type = ls.lightType;
-                light.color = new UnityEngine.Color(float.Parse(c[0]), float.Parse(c[1]), float.Parse(c[2]));
-                light.intensity = ls.intensity;
-                light.range = ls.range;
-                light.spotAngle = ls.spotAngle;
-                light.shadows = LightShadows.Soft;
+                light.intensity = ls.behaviour.intensityMax;
+                ReflectionObjectManipulator.Transfer(light, ls.specs.ToArray());
 
                 Debug.Log("Light Plugin: Securing Light To Base");
                 socket.transform.position = asset.BaseLoader.transform.position;
@@ -110,10 +106,10 @@ namespace LordAshes
                 socket.transform.SetParent(asset.BaseLoader.transform);
 
                 Debug.Log("Light Plugin: Adjusting Light Position");
-                socket.transform.localPosition = new Vector3(float.Parse(p[0]), float.Parse(p[1]), float.Parse(p[2]));
-                socket.transform.localEulerAngles = new Vector3(float.Parse(r[0]), float.Parse(r[1]), float.Parse(r[2]));
+                socket.transform.localPosition = lights[lightName].position;
+                socket.transform.localEulerAngles = lights[lightName].rotation;
 
-                if(ls.hiddenBase)
+                if(ls.behaviour.hiddenBase)
                 {
                     CreatureManager.SetCreatureExplicitHideState(asset.Creature.CreatureId, true);
                     CreatureManager.SetCreatureName(asset.Creature.CreatureId, "<color=red>");
@@ -135,6 +131,36 @@ namespace LordAshes
 
                 if (socket != null) { GameObject.Destroy(socket); }
             }
+        }
+
+        public string ConvertLegacyConfiguration()
+        {            
+            string config = FileAccessPlugin.File.Find("LightTypes.json")[0];
+            Debug.Log("Light Plugin: Converting Legacy Configuration In " + config);
+            string configNew = config.Substring(0, config.Length - 5) + ".kvp";
+            Debug.Log("Light Plugin: Writing Updated Configuration In " + configNew);
+            List<LegacyLightSpecs> llss = JsonConvert.DeserializeObject<List<LegacyLightSpecs>>(System.IO.File.ReadAllText(config));
+            System.IO.File.WriteAllText(configNew, "");
+            foreach (LegacyLightSpecs lls in llss)
+            {
+                System.IO.File.AppendAllText(configNew, "[" + lls.name + " : LightSpecs];\r\n");
+                // System.IO.File.AppendAllText(configNew, ".name=" + lls.name + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".menu.iconName=" + lls.iconName + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".menu.menuNode=" + lls.menuNode + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".menu.menuLink=" + lls.menuLink + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".menu.onlyGM=" + lls.onlyGM + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.sight=" + lls.sight + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.hiddenBase=" + lls.hiddenBase + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.flicker=" + lls.flicker + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.intensityMin=" + lls.intensityMin + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.intensityMax=" + lls.intensity + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".behaviour.deltaMax=" + lls.deltaMax + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".position=" + lls.pos + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".rotation=" + lls.rot + ";\r\n");
+                System.IO.File.AppendAllText(configNew, ".specs=[\"type="+(int)lls.lightType+"\", \"color=" + lls.color + "\", \"range=" + lls.range + "\", \"spotAngle=" + lls.spotAngle + "\", \"shadows=2\"];\r\n");
+                System.IO.File.AppendAllText(configNew, ";\r\n");
+            }
+            return configNew;
         }
     }
 }
