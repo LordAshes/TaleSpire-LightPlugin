@@ -18,7 +18,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.6.0.0";                        
+        public const string Version = "1.6.1.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -57,7 +57,7 @@ namespace LordAshes
                 UnityEngine.Debug.Log("Light Plugin: Found Legacy Configuration");
                 configLocation = ConvertLegacyConfiguration();
             }
-            else if (FileAccessPlugin.File.Exists("LightTypes.json"))
+            else if (FileAccessPlugin.File.Exists("LightTypes.kvp"))
             {
                 UnityEngine.Debug.Log("Light Plugin: Found Light Configuration");
                 configLocation = FileAccessPlugin.File.Find("LightTypes.kvp")[0];
@@ -96,7 +96,7 @@ namespace LordAshes
                     Icon = FileAccessPlugin.Image.LoadSprite("Light.png"),
                     Action = (s, a) => { Debug.Log("Opening GUI Menu"); menu.Open("Root", LightSelectionHandler); },
                     CloseMenuOnActivate = true
-                });
+                }, (guid1,guid2)=> { return true; });
                 // Create GUI menu for light sub-selections
                 foreach (LightSpecs light in lights.Values)
                 {
