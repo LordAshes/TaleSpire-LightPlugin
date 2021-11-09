@@ -18,7 +18,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.6.1.0";                        
+        public const string Version = "1.6.2.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -54,13 +54,13 @@ namespace LordAshes
             string configLocation = "";
             if (FileAccessPlugin.File.Exists("LightTypes.json") || !FileAccessPlugin.File.Exists("LightTypes.kvp"))
             {
-                UnityEngine.Debug.Log("Light Plugin: Found Legacy Configuration");
                 configLocation = ConvertLegacyConfiguration();
+                UnityEngine.Debug.Log("Light Plugin: Found Legacy Configuration At '"+configLocation+"'");
             }
             else if (FileAccessPlugin.File.Exists("LightTypes.kvp"))
             {
-                UnityEngine.Debug.Log("Light Plugin: Found Light Configuration");
                 configLocation = FileAccessPlugin.File.Find("LightTypes.kvp")[0];
+                UnityEngine.Debug.Log("Light Plugin: Found Light Configuration At '"+configLocation+"'");
             }
             else
             {
@@ -69,11 +69,14 @@ namespace LordAshes
             }
 
             Dictionary<string, object> objs = new Dictionary<string, object>();
+            UnityEngine.Debug.Log("Light Plugin: Building Lights");
             ReflectionObjectManipulator.BuildObjectsFromFile(ref objs, configLocation);
             // Add extinguish light option
-            LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png" } };
+            UnityEngine.Debug.Log("Light Plugin: Adding Extinguish Light Option");
+            LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png", menuNode = "Root" } };
             lights.Add(extinguish.name, extinguish);
             // Add configured lights
+            UnityEngine.Debug.Log("Light Plugin: Creating Light Dictionary");
             foreach (KeyValuePair<string, object> obj in objs)
             {
                 // ((LightSpecs)obj.Value).name = obj.Key;
@@ -81,6 +84,7 @@ namespace LordAshes
             }
 
             // Determine if sub-menus are used
+            UnityEngine.Debug.Log("Light Plugin: Detecting Usage Of Sub-Menus");
             bool submenus = false;
             foreach (LightSpecs light in lights.Values)
             {
@@ -102,22 +106,23 @@ namespace LordAshes
                 {
                     if (menu.GetNode(light.menu.menuNode) == null)
                     {
-                        Debug.Log("Making Node '" + light.menu.menuNode + "'");
+                        Debug.Log("Light Plugin: Making Node '" + light.menu.menuNode + "' For '"+light.name+"'");
                         GUIMenuPlugin.MenuNode node = new GUIMenuPlugin.MenuNode(light.menu.menuNode, new GUIMenuPlugin.IMenuItem[0], menuStyle);
                         menu.AddNode(node);
                     }
                     if (light.menu.menuLink != "")
                     {
                         // Add Menu Link
-                        Debug.Log("Adding Link '" + light.menu.menuLink + "' To Node '" + light.menu.menuNode + "'");
+                        Debug.Log("Light Plugin: Adding Link '" + light.menu.menuLink + "' To Node '" + light.menu.menuNode + "' For '"+ light.name+"'");
                         menu.GetNode(light.menu.menuNode).AddLink(new GUIMenuPlugin.MenuLink(light.menu.menuLink, light.name, menuLinkColor, FileAccessPlugin.Image.LoadTexture(light.menu.iconName), light.menu.onlyGM));
                     }
                     else
                     {
                         // Add Menu Selection
-                        Debug.Log("Adding Selection '" + light.name + "' To Node '" + light.menu.menuNode + "'");
+                        Debug.Log("Light Plugin: Adding Selection '" + light.name + "' To Node '" + light.menu.menuNode + "'");
                         menu.GetNode(light.menu.menuNode).AddSelection(new GUIMenuPlugin.MenuSelection(light.name, light.name, menuSelectionColor, FileAccessPlugin.Image.LoadTexture(light.menu.iconName), light.menu.onlyGM));
-                        lights.Add(light.name, light);
+                        Debug.Log("Light Plugin: Adding To Light Dictionary");
+                        // lights.Add(light.name, light);
                     }
                 }
             }
