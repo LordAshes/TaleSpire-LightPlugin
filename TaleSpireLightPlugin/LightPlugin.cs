@@ -18,7 +18,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.6.2.0";                        
+        public const string Version = "1.6.3.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -71,10 +71,6 @@ namespace LordAshes
             Dictionary<string, object> objs = new Dictionary<string, object>();
             UnityEngine.Debug.Log("Light Plugin: Building Lights");
             ReflectionObjectManipulator.BuildObjectsFromFile(ref objs, configLocation);
-            // Add extinguish light option
-            UnityEngine.Debug.Log("Light Plugin: Adding Extinguish Light Option");
-            LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png", menuNode = "Root" } };
-            lights.Add(extinguish.name, extinguish);
             // Add configured lights
             UnityEngine.Debug.Log("Light Plugin: Creating Light Dictionary");
             foreach (KeyValuePair<string, object> obj in objs)
@@ -93,6 +89,10 @@ namespace LordAshes
             if (submenus)
             {
                 UnityEngine.Debug.Log("Light Plugin: Using GUI Menus With Hierarchy.");
+                // Add extinguish light option
+                UnityEngine.Debug.Log("Light Plugin: Adding Extinguish Light Option");
+                LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png", menuNode = "Root" } };
+                lights.Add(extinguish.name, extinguish);
                 // Create root character light menu
                 RadialUI.RadialUIPlugin.AddOnCharacter(LightPlugin.Guid, new MapMenu.ItemArgs()
                 {
@@ -129,6 +129,10 @@ namespace LordAshes
             else
             {
                 UnityEngine.Debug.Log("Light Plugin: Using Flat Radial Menu.");
+                // Add extinguish light option
+                UnityEngine.Debug.Log("Light Plugin: Adding Extinguish Light Option");
+                LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png" } };
+                lights.Add(extinguish.name, extinguish);
                 // Create root character light menu
                 RadialUI.RadialSubmenu.EnsureMainMenuItem(LightPlugin.Guid, RadialUI.RadialSubmenu.MenuType.character, "Light", FileAccessPlugin.Image.LoadSprite("Light.png"));
                 // Create sub-menu for light sub-selections
