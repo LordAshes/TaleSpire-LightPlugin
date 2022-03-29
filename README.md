@@ -16,6 +16,7 @@ Added light causes object to cast shadows. Added light produced hard light limit
 ## Change Log
 
 ```
+1.7.3: Added udpated light to radial menu if it is not already present
 1.7.2: Added SaveConfig method to dump lights configuration to KVP file
 1.7.1: Bug fix: Exposed method and lights property are made static
 1.7.0: Added UpdateLight() method to change light properties locally
