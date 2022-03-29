@@ -64,10 +64,22 @@ namespace LordAshes
         /// <param name="cid"></param>
         private void ProcessRequest(CreatureGuid cid, string lightName)
         {
+            if (lightName != "")
+            {
+                ProcessLightRequest(cid, lights[lightName]);
+            }
+            else
+            {
+                ProcessLightRequest(cid, null);
+            }
+        }
+
+        private void ProcessLightRequest(CreatureGuid cid, LightSpecs ls)
+        {
             CreatureBoardAsset asset;
             CreaturePresenter.TryGetAsset(cid, out asset);
 
-            if (lightName != "")
+            if (ls != null)
             {
                 GameObject socket = null;
                 foreach (GameObject go in GameObject.FindObjectsOfType<GameObject>())
@@ -95,7 +107,6 @@ namespace LordAshes
                 }
 
                 Debug.Log("Light Plugin: Adjusting The Light");
-                LightSpecs ls = lights[lightName];
                 light.name = "Effect:Light:" + ls.name + ":"+cid;
                 light.intensity = ls.behaviour.intensityMax;
                 ReflectionObjectManipulator.Transfer(light, ls.specs.ToArray());
@@ -106,8 +117,8 @@ namespace LordAshes
                 socket.transform.SetParent(asset.BaseLoader.transform);
 
                 Debug.Log("Light Plugin: Adjusting Light Position");
-                socket.transform.localPosition = lights[lightName].position;
-                socket.transform.localEulerAngles = lights[lightName].rotation;
+                socket.transform.localPosition = ls.position;
+                socket.transform.localEulerAngles = ls.rotation;
 
                 if(ls.behaviour.hiddenBase)
                 {

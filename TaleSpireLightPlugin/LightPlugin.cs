@@ -5,6 +5,7 @@ using UnityEngine;
 
 using System.Collections.Generic;
 using System;
+using System.Reflection;
 
 namespace LordAshes
 {
@@ -18,7 +19,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.6.3.0";                        
+        public const string Version = "1.7.2.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -26,12 +27,14 @@ namespace LordAshes
         private UnityEngine.Color menuLinkColor { get; set; }
         private UnityEngine.Color menuSelectionColor { get; set; }
 
-        private Dictionary<string,LightSpecs> lights = new Dictionary<string,LightSpecs>();
+        public static Dictionary<string,LightSpecs> lights = new Dictionary<string,LightSpecs>();
 
         private int flickerSequencer = 0;
         private int flickerSteps = 20;
 
         private GUIMenuPlugin.GuiMenu menu = new GUIMenuPlugin.GuiMenu();
+
+        private static LightPlugin self = null;
 
         /// <summary>
         /// Function for initializing plugin
@@ -39,8 +42,9 @@ namespace LordAshes
         /// </summary>
         void Awake()
         {
-            // Not required but good idea to log this state for troubleshooting purpose
-            UnityEngine.Debug.Log("Light Plugin: Lord Ashes Light Plugin Is Active.");
+            self = this;
+
+            UnityEngine.Debug.Log("Light Plugin: "+this.GetType().AssemblyQualifiedName+" Is Active.");
 
             // Obtain Flicker Configuration
             flickerSteps = Config.Bind("Settings", "Updates per flicker update", 20).Value;
@@ -94,7 +98,7 @@ namespace LordAshes
                 LightSpecs extinguish = new LightSpecs() { name = "None", menu = new LightMenu() { iconName = "None.png", menuNode = "Root" } };
                 lights.Add(extinguish.name, extinguish);
                 // Create root character light menu
-                RadialUI.RadialUIPlugin.AddOnCharacter(LightPlugin.Guid, new MapMenu.ItemArgs()
+                RadialUI.RadialUIPlugin.AddCustomButtonOnCharacter(LightPlugin.Guid, new MapMenu.ItemArgs()
                 {
                     Title = "Light",
                     Icon = FileAccessPlugin.Image.LoadSprite("Light.png"),
@@ -218,6 +222,44 @@ namespace LordAshes
             menu.Draw();
         }
 
+        public static void UpdateLight(CreatureGuid cid, LightSpecs ls)
+        {
+            if (!lights.ContainsKey(ls.name)) { lights.Add(ls.name, ls); } else { lights[ls.name] = ls; }
+            self.ProcessLightRequest(cid, ls);
+        }
+
+        public static void SaveConfig(string saveFileName)
+        {
+            FileAccessPlugin.File.WriteAllText(saveFileName, "");
+            foreach (LightSpecs ls in lights.Values)
+            {
+                FileAccessPlugin.File.AppendAllText(saveFileName, "["+ls.name+" : LightSpecs];\r\n");
+                foreach(PropertyInfo prop in ls.menu.GetType().GetProperties())
+                {
+                    FileAccessPlugin.File.AppendAllText(saveFileName, ".menu." + prop.Name + "=" + prop.GetValue(ls.menu) + ";\r\n");
+                }
+                foreach (PropertyInfo prop in ls.behaviour.GetType().GetProperties())
+                {
+                    FileAccessPlugin.File.AppendAllText(saveFileName, ".behaviour." + prop.Name + "=" + prop.GetValue(ls.behaviour) + ";\r\n");
+                }
+                FileAccessPlugin.File.AppendAllText(saveFileName, ".position=" + ls.position.ToString().Replace("(","").Replace(")","").Replace(" ","") + ";\r\n");
+                FileAccessPlugin.File.AppendAllText(saveFileName, ".rotation=" + ls.rotation.ToString().Replace("(", "").Replace(")", "").Replace(" ", "") + ";\r\n");
+                FileAccessPlugin.File.AppendAllText(saveFileName, ".specs=[");
+                for(int s=0; s<ls.specs.Count; s++)
+                {
+                    if (s != (ls.specs.Count - 1))
+                    {
+                        FileAccessPlugin.File.AppendAllText(saveFileName, "\"" + ls.specs[s] + "\", ");
+                    }
+                    else
+                    {
+                        FileAccessPlugin.File.AppendAllText(saveFileName, "\"" + ls.specs[s] + "\"");
+                    }
+                }
+                FileAccessPlugin.File.AppendAllText(saveFileName, "];\r\n");
+                FileAccessPlugin.File.AppendAllText(saveFileName, ";\r\n");
+            }
+        }
 
         public class LightBehaviour
         {
