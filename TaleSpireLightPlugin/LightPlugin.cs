@@ -19,7 +19,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Light Plug-In";                     
         public const string Guid = "org.lordashes.plugins.light";       
-        public const string Version = "1.7.2.0";                        
+        public const string Version = "1.7.3.0";                        
 
         // Configuration
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
@@ -222,10 +222,33 @@ namespace LordAshes
             menu.Draw();
         }
 
-        public static void UpdateLight(CreatureGuid cid, LightSpecs ls)
+        public static void UpdateLight(CreatureGuid holder, LightSpecs ls)
         {
-            if (!lights.ContainsKey(ls.name)) { lights.Add(ls.name, ls); } else { lights[ls.name] = ls; }
-            self.ProcessLightRequest(cid, ls);
+            if (!lights.ContainsKey(ls.name)) 
+            { 
+                lights.Add(ls.name, ls);
+                RadialUI.RadialSubmenu.CreateSubMenuItem(LightPlugin.Guid, ls.name, FileAccessPlugin.Image.LoadSprite(ls.menu.iconName),
+                                         (cid, s, mmi) => { self.RadialMenuRequest(cid, RadialUI.RadialUIPlugin.GetLastRadialTargetCreature(), ls.name); },
+                                         true,
+                                         () =>
+                                         {
+                                             bool isGM = LocalClient.IsInGmMode;
+                                             bool isOwner = LocalClient.CanControlCreature(new CreatureGuid(RadialUI.RadialUIPlugin.GetLastRadialTargetCreature()));
+                                             if (isOwner && (isGM || ls.menu.onlyGM == false))
+                                             {
+                                                 return true;
+                                             }
+                                             else
+                                             {
+                                                 return false;
+                                             }
+                                         });
+            }
+            else 
+            { 
+                lights[ls.name] = ls; 
+            }
+            self.ProcessLightRequest(holder, ls);
         }
 
         public static void SaveConfig(string saveFileName)
