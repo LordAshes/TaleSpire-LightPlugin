@@ -15,25 +15,28 @@ Added light causes object to cast shadows. Added light produced hard light limit
  
 ## Change Log
 
+```
+1.7.2: Added SaveConfig method to dump lights configuration to KVP file
+1.7.1: Bug fix: Exposed method and lights property are made static
+1.7.0: Added UpdateLight() method to change light properties locally
+1.7.0: Exposed lights dictionary for easier configuration file manipulation
+1.6.3: Fixed bug with access to Radial UI menu when no hierarchy is defined
+1.6.2: Fixed bug which prvented GUI Menu functionality
+1.6.1: Fixed bug that did not allow use of KVP file without JSON
+1.6.0: Modified for direct light object access
+1.6.0: Modified configuration file format
+1.6.0: Includes automatic conversion of legacy configuration to new format
 1.5.0: Added support for hierarchical light menus using GUI Menu Plugin
-
 1.4.1: Bug fix for issue which prevented lights from being removed
-
 1.4.0: Added optional properties intensityMin and deltaMax for two flickering light options
-
 1.3.0: Added hiddenBase option
-
 1.2.0: Added GM only light option (via onlyGM property)
-
 1.2.0: Light menu does not show options for mini that the player does not own
-
 1.2.0: Changed sight light distribution so that it can be triggered by player or GM
-
 1.1.0: Added sight light option (light only visible by mini owner and GM)
-
 1.1.0: Removal of light now removes Stats Messaging key (as opposed to making it blank)
-
 1.0.0: Initial release
+```
 
 ## Install
 
@@ -54,84 +57,119 @@ light will be turned on. Select the None sub-menu option to turn off the light.
 ### Configuring Lights
 
 The number of lights and their effect, provided by the plugin, is completely configurable.
-The plugin comes with a JSON (text) file which can be opened and edited to add, modify or
-remove lights. The structure for a light is as follows:
+The number of lights and their effects can be configured by modifying the *LightTypes.kvp* file
+which replaces the previous *LightTypes.json* file. The kvp is a non-standard file format
+but provide full access to the properties of the light object as opposed to a limited number
+of properties wrapped by the plugin (as was the case previously). The following outlines the
+format of the file and the common light object properties that were set in the previous
+version of the plugin:
 
-	{"name":"Ball(10')",
-		"lightType":2,
-		"iconName":"ball.png",
-		"intensity":0.05,
-		"color":"200,200,200",
-		"range":3.0,
-		"pos":"0,1.5,0",
-		"rot":"90,0,0",
-		"spotAngle":10.0,
-		"flicked":true,
-		"intensityMin":0.025,
-		"deltaMax":0.05,
-		"sight":false,
-		"onlyGM":false,
-		"hiddenBase":false
-	}
+Each line ends with a semicolor (;). This includes any lines with a comment.
 
-Each entry for a light is separated by a comma and the whole thing is enclosed in a set of
-square brackets (as per the sample JSON that comes with the plugin).
+Each light starts with the entry in square brackets which contains the name of the light,
+followed by a colon and then the type LightSpecs, such as:
 
-"name" is the name associated with the light and is the text that is displayed in the Light
-radial sub-menu.
+[Torch : LightSpecs];
 
-"lightType" determine the type of light 0=Spotlight, Directional=1, Point=2, Rectangle=3,
-and Disc=4. Rectangle and Disc may not be fully supported at this time. Spotlight creates
-a cone from the position point in the direction of the rotation with the angle of the cone
-defined by spotAngle. Directional creates a lightbeam from the position in the direction of
-the rotation. Point creates light in all direction from the position point.
+This is followed by any number of entries for the specific light. The entries for each light
+have been grouped in sub-categries for easy categorization. The group are: menu, behaviour
+and specs.
 
-"iconName" determines the name of the PNG file to be used in the radial menu for this light.
+.menu.iconName=ball.png;
 
-"intensity" determines how stong the light is (normally between 0 to 1).
+The iconName property determines the name of the icon file to be used for the light.
 
-"color" is a RGB string consisting of the red, green and blue values expressed as a value
-from 0 to 255, separated by a comma.
+.menu.menuNode=;
 
-"range" determines how far the light reaches.
+The menuNode property is optional and determines which menu the light shows up if sub-menus
+are being used. If all iconNode properties are empty then all lights will show up in a single
+radial menu. If menuNode is set then the light when show only when that particular menu is
+being displayed (see below). 
 
-"pos" is a string of x, y, z float co-ordinates, separataed by commas, indicating the position
-offset from the base of the mini.
+.menu.menuLink=;
 
-"rot" is a string of x, y, z float co-ordinates, separataed by commas, indicating the rotation
-offset from the base of the mini.
+The menuLink property is optional and determines what menu is shown if the corresponding menu
+item is selected. This property is only used when using multipe menus (i.e. menuNode is set).
 
-"spotAngle" is a float indicating the angle of a spot light.
+.menu.onlyGM=False;
 
-"flicker" is a boolean (true or false) which determines if the light uses either or both of the
-plicker effects. Default is false. See "intensityMin" and "deltaMax" for details.
+The onlyGM property is used to determine if players can see the corresponding light option or
+if it the light menu item is only visible to the GM. Please note this applied to the menu item
+and not the light itself. You can either make the link to the menu onlyGM in which case only
+the GM will be able to access that menu or you can set individual menu items as onlyGM in which
+case only those items will not be visible to players.  
 
-"intensityMin" is a float that determines the minimum intensity that the flickering light will
-drop to. When flicker is on the intensity will randomly changes between intensityMin and intensity.
-Not used if the flicker setting for the light is set to false. As far as I can tell, this is the
-flicker method used by TS. Setting this to the same as intensity will produce a non-changing
-intensity.
+.behaviour.sight=False;
 
-"deltaMax" is a float which determines how much the light can randomly shift when flickering.
-When this value is not zero the light will randomly shift in the x and y direction up to this
-value. This setting is ignored if the light's flicker setting is false. Used to make the shadows
-shift or "dance". Setting this setting to 0 will provide a non-shifting light.
+The sight property is used to determine if the light is only visible to the GM and the mini
+owner (true) or if it is visisble to all players (false). Typically used to implement various
+visions like darkvision.
 
-"sight" indicates if the light is personal light (e.g. darkvision) or regular light which
-benefits all party members. If true only mini owner and GM can see the light. If false then
-all players can see the light.
+.behaviour.hiddenBase=False;
 
-"onlyGM" indicates if the light option is only visible to GM. Please note that this does not
-mean the light is visible to GM only, it means the option to add it is limited to GM. This way
-the GM can define lights like ambient lights or lights for the room and players will not have
-those options in their mini light menu. 
+The hiddenBase property is typically used with onlyGM lights to produce environment lighting
+like fire pits, lanters, chandeliers and other effects without showing the mini to which the
+light is attached. Saves the GM the step of having to hide the mini and also erases the name
+of the mini so that the name does not show up in the GM view (and clutter the screen in cases
+where there are a lot of lights). 
 
-"hiddenBase" indicates if the corresponding base should be automatically hidden. Typically, this
-is used with onlyGM lights which are not associated with a mini such as ambient lighting, wall
-mounted lights, hanging lights and so on. When this setting is set to true, activating the light
-will automatically hide the mini (leaving only the light effect) and will also erase the base
-mini name so that its name does not clutter the GM view. 
+.behaviour.flicker=False;
 
+The flicker property determines if the light is steady or if it flickes. There are two possible
+flicker effects. When set to true a light can use either flicker effect or both. When the values
+of intensityMin and intensityMax are different and flicker is true, the intensity of the light
+will shift to random values between the min and max intensity. When deltaMax is not 0 then light
+will also shift in the x and y direction, randomly, up to the deltaMax distance.
+
+.behaviour.intensityMin=0;
+.behaviour.intensityMax=0.05;
+
+These properties are used to set the mininum and maximum intensity for a flickering light.
+When flicker is false, intensityMax will be used for the light intensity.
+
+.behaviour.deltaMax=0;
+
+This proeprty determines how much the light can shift, randomly, from its specified centre when
+flicker is true. Not used when flicker is false.
+
+.position=0,1.5,0;
+
+This property determines the position of the light with respect to the mini to which it is attached.
+
+.rotation=90,0,0;
+
+This property determines the rotation of the light with respect to the mini to which it is attached.
+The default value of 90,0,0 is a light that is pointing straight down.
+
+.specs=["type=2", "color=200,200,200", "range=3", "spotAngle=10", "shadows=2"];
+
+The specs property is an list of Unity Light properties and their values. Any Unity Light property
+whose value can be JSON serialzied and JOSN deserialized can be added into the specs list with its
+JSON value. The above settings are the settings that were accessible in the previous version of the
+plugin with shadow being an additional property (previously hard coded to 2). It should be noted that
+while the value of specs is a JSON value, it is a array of strings, and not object properties, with
+each key value pair being a string in the array. 
+
+The type property determine the type of light. 0=Spotlight, Directional=1, Point=2, Rectangle=3,
+and Disc=4. Rectangle and Disc may not be fully supported at this time. Spotlight creates a cone from
+the position point in the direction of the rotation with the angle of the cone defined by spotAngle.
+Directional creates a lightbeam from the position in the direction of the rotation. Point creates light
+in all direction from the position point.
+
+The color property determines the color of the light in R,G,B format. Each R, G and B value ranges from
+0 to 255. The R, G and B values are separated by commas.
+
+The range property indicates the maximum range of the light.
+
+The spotAngle property determines the angle of the cone of the spot light.
+
+The shadows determines the type of shadows produced. 0=None, 1=Hard, and 2=Soft.
+
+As indicated above the new plugin interpreter allows any property of the Light object to be specified
+as long as the value can be JSON serialized and JSON deserialized. Additional key value pairs can be
+added as string entries to the array to set additional properties. See Unity Light object for more
+details on what additional properties can be set.
+  
 ### Configuring Light Menus
 
 There are two optional settings which can be used with light configuration to place them in
@@ -153,140 +191,63 @@ By editing the R2ModMan configuration for the plugin, you can change the text co
 entries, text color of selection entries and if the menu is a centre menu (menu appears in the
 middle of the screen) or a side menu (menu slides out of the right side of the screen).
 
-Sample config showing a 3 menu system: one main menu offering No Light selection and two
-sub-menus (Spotlights and Ambient) and then entries for each of the sub-menus. The spot lightType
-link is only available to GM. Notice that it was not necessary to mark each of the Spotlights as
-GM only since the link to that menu is only available to GM. Notice the back entries which can
-be used to navigate to the parent menu.
-
-```[
-	{"name":"None",
-		"iconName":"none.png",
-		"menuNode":"Root"
-	},
-	{"name":"Splotlights",
-		"iconName":"spot.png",
-		"onlyGM":true,
-		"menuNode":"Root",
-		"menuLink":"Spotlights"
-	},
-	{"name":"Ambient",
-		"iconName":"ball.png",
-		"menuNode":"Root",
-		"menuLink":"Ambient"
-	},
-	{"name":"Back",
-		"iconName":"none.png",
-		"menuNode":"Ambient",
-		"menuLink":"Root"
-	},
-	{"name":"Back",
-		"iconName":"none.png",
-		"menuNode":"Spotlights",
-		"menuLink":"Root"
-	},
-	{"name":"Ball(10')",
-		"lightType":2,
-		"iconName":"ball.png",
-		"intensity":0.05,
-		"color":"200,200,200",
-		"range":3.0,
-		"pos":"0,1.5,0",
-		"rot":"90,0,0",
-		"spotAngle":10.0,
-		"menuNode": "Ambient"
-	},
-	{"name":"Torch",
-		"lightType":2,
-		"iconName":"torch.png",
-		"intensity":0.03,
-		"color":"255,255,128",
-		"range":2.0,
-		"pos":"0,0.75,0",
-		"rot":"90,0,0",
-		"spotAngle":15.0,
-		"flicker": true,
-		"intensityMin": 0.025,
-		"deltaMax": 0.05,
-		"menuNode": "Ambient"
-	},
-	{"name":"Darkvision",
-		"lightType":2,
-		"iconName":"light.png",
-		"intensity":0.03,
-		"color":"255,255,128",
-		"range":2.0,
-		"pos":"0,0.75,0",
-		"rot":"90,0,0",
-		"spotAngle":15.0,
-		"sight":true,
-		"menuNode": "Ambient"
-	},
-	{"name":"Spot (White)",
-		"lightType":0,
-		"iconName":"spot.png",
-		"intensity":0.03,
-		"color":"255,255,255",
-		"range":3.5,
-		"pos":"0,3,0",
-		"rot":"90,0,0",
-		"spotAngle":45.0,
-		"onlyGM":true,
-		"menuNode": "Spotlights"
-	},
-	{"name":"Spot (Red)",
-		"lightType":0,
-		"iconName":"spot.png",
-		"intensity":0.03,
-		"color":"255,0,0",
-		"range":3.5,
-		"pos":"0,3,0",
-		"rot":"90,0,0",
-		"spotAngle":25.0,
-		"onlyGM":true,
-		"menuNode": "Spotlights"
-	},
-	{"name":"Spot (Green)",
-		"lightType":0,
-		"iconName":"spot.png",
-		"intensity":0.03,
-		"color":"0,255,0",
-		"range":3.5,
-		"pos":"0,3,0",
-		"rot":"90,0,0",
-		"spotAngle":25.0,
-		"onlyGM":true,
-		"menuNode": "Spotlights"
-	},
-	{"name":"Spot (Blue)",
-		"lightType":0,
-		"iconName":"spot.png",
-		"intensity":0.03,
-		"color":"0,0,255",
-		"range":3.5,
-		"pos":"0,3,0",
-		"rot":"90,0,0",
-		"spotAngle":25.0,
-		"onlyGM":true,
-		"menuNode": "Spotlights"
-	}
-]
-```
-
 ### Configuring Update Interval
 
 The R2ModMan configuration for the plugin contains an value which determines how often the light
 flicker is updated. The higher the number the less frequently the light flicker is updated and
 thus the less flickering. The smaller the value the faster the flickering will change. Min 0.
 
+### Use As A Dependecny Plugin 
+
+Plugins which want to modify a light's properties can use the ``UpdateLight(cid, ls)`` method
+which updates a light to the specified LightSpecs. Such changes are not automatically propagated
+to other clients allowing a light to be adjusted on one device and then the final results to be
+sent to other clients.
+
+Cid is the CreatureGuid of the mini that contains the light. If a light is not present one is
+created. If a light is present the light is modified.
+
+Ls is the LightSpecs specification of the light (see above).
+
+The modified lights configruation can be saved to a KVP file using ``SaveConfig(filename)``.
+
 ## Limitations
 
-1. Currently the JSON file is a local file which, if modified, need to be distributed to all
+1. Currently the KVP file is a local file which, if modified, need to be distributed to all
    players in order for the light be to correctly rendered on all players' devices.
       
 2. Each mini supports only one light at a time. But you can always add a mini with a second
    effect and even use Grab/Drop plugin to grag it around automatically.
    
 3. When a mini is not owned, the top level Light menu still shows but has no sub-options.
+
+## With Great Powers Comes Great Responsibility
+
+The new configruatin interpreter is capable of creating new objects on the fly and settings
+property values for any of its properties. This makes the interpreter very powerful because
+it means that if the Unity Light object is updated with new properties the Light Plugin will
+be able to make use of them without any update to the Light Plugin. For the Light Plugin this
+is not a big deal because the Light object does not have too many properties and thus the
+previous plugin version was able to wrap most of them and make them accessible. However, for
+more complex objects (like the Particle System) this is decrease the amount of work greatly
+becuase the plugin no longer needs to wrap each proeprty to expose it.
+
+The downside of this is that it does, theoretically, introduce a security risk. Since the
+configuration can be used to create new objects and set any proeprty, it could be used to
+inject malicious code to make the plugin do something is should not.
+
+However, in most cases this is not a concern because the configruation files being run is
+a local file and thus only a risk if you are running a configuration file created by someone
+else. Since you are already trusting Lord Ashes by running his plugin, we can rule out the
+concern that Lord Ashes will create a malicious configruation file so it really comes down
+to configruation files provided by other players. On top of that, it is really easy to see
+if a configuraton files is malicious. Open it up. If the configuration looks similar to the
+sample configruation with properties having a single values (or a list in the case of specs)
+then the file is okay. If, instead, any propety has what appears to be bunch of code slipped
+into it then it is probably a malicious attempt to do something odd.
+
+In 99% of cases this is not a concern but I wanted to mention it since technically it is
+possible. I am not even sure you could accomplish with this exploit (if anything useful).
+So just double check the configruation if you are getting it from a 3rd party.
 
 
