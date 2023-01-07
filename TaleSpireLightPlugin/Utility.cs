@@ -2,6 +2,7 @@
 using BepInEx.Configuration;
 using System;
 using System.Linq;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -82,6 +83,107 @@ namespace LordAshes
                     }
                 }
                 return null;
+            }
+
+            public static string GetCreatureName(string name)
+            {
+                if (name.Contains("<"))
+                {
+                    name = name.Substring(0, name.IndexOf("<"));
+                }
+                return name;
+            }
+
+            /// <summary>
+            /// Method to obtain the Base Loader Game Object based on a CreatureGuid
+            /// </summary>
+            /// <param name="cid">Creature Guid</param>
+            /// <returns>BaseLoader Game Object</returns>
+            public static GameObject GetBaseLoader(CreatureGuid cid)
+            {
+                CreatureBoardAsset asset = null;
+                CreaturePresenter.TryGetAsset(cid, out asset);
+                if (asset != null)
+                {
+                    CreatureBase _base = null;
+                    StartWith<CreatureBase>(asset, "_base", ref _base);
+                    Transform baseLoader = null;
+                    Traverse(_base.transform, "BaseLoader", ref baseLoader);
+                    if (baseLoader != null)
+                    {
+                        return baseLoader.GetChild(0).gameObject;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Light Plugin: Could Not Find Base Loader");
+                        return null;
+                    }
+                }
+                return null;
+            }
+
+            /// <summary>
+            /// Method to obtain the Asset Loader Game Object based on a CreatureGuid
+            /// </summary>
+            /// <param name="cid">Creature Guid</param>
+            /// <returns>AssetLoader Game Object</returns>
+            public static GameObject GetAssetLoader(CreatureGuid cid)
+            {
+                CreatureBoardAsset asset = null;
+                CreaturePresenter.TryGetAsset(cid, out asset);
+                if (asset != null)
+                {
+                    Transform _creatureRoot = null;
+                    StartWith(asset, "_creatureRoot", ref _creatureRoot);
+                    Transform assetLoader = null;
+                    Traverse(_creatureRoot, "AssetLoader", ref assetLoader);
+                    if (assetLoader != null)
+                    {
+                        return assetLoader.GetChild(0).gameObject;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Light Plugin: Could Not Find Asset Loader");
+                        return null;
+                    }
+                }
+                return null;
+            }
+
+            public static void StartWith<T>(CreatureBoardAsset asset, string seek, ref T match)
+            {
+                Type type = typeof(CreatureBoardAsset);
+                match = default(T);
+                foreach (FieldInfo fi in type.GetRuntimeFields())
+                {
+                    if (fi.Name == seek)
+                    {
+                        match = (T)fi.GetValue(asset);
+                        break;
+                    }
+                }
+            }
+
+            public static void Traverse(Transform root, string seek, ref Transform match, string path = "")
+            {
+                path = path + root.name + ".";
+                Debug.Log("Light Plugin: Found '" + path + "' (with "+root.childCount+" Children)");
+                if (match != null) { return; }
+                if (Convert.ToString(root.name) == Convert.ToString(seek)) 
+                {
+                    match = root; 
+                    return; 
+                }
+                foreach (Transform child in root.Children())
+                {
+                    Traverse(child, seek, ref match, path);
+                    if (match != null) { return; }
+                }
+            }
+
+            public static float ParseFloat(string value)
+            {
+                return float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
             }
         }
     }
